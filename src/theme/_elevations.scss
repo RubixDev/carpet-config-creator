@@ -1,0 +1,26 @@
+@use 'sass:color';
+
+$elevations: (
+    0: 0%,
+    1: 5%,
+    2: 7%,
+    3: 8%,
+    4: 9%,
+    6: 11%,
+    8: 12%,
+    12: 14%,
+    16: 15%,
+    24: 16%,
+);
+@mixin color-vars($color-base, $color-overlay) {
+    @each $elevation1, $overlay1 in $elevations {
+        $base: color.mix($color-overlay, $color-base, $overlay1);
+        @each $elevation2, $overlay2 in $elevations {
+            --clr-height-#{$elevation1}-#{$elevation2}: #{color.mix(
+                    $color-overlay,
+                    $base,
+                    $overlay2
+                )};
+        }
+    }
+}

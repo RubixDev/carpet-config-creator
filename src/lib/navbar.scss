@@ -1,0 +1,13 @@
+#menubar {
+    display: none;
+}
+
+@media screen and (max-width: 37.4375rem) {
+    #toolbar {
+        display: none;
+    }
+
+    #menubar {
+        display: inherit;
+    }
+}

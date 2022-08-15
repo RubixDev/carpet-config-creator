@@ -1,0 +1,30 @@
+@use 'sass:color';
+
+@use '@material/theme/color-palette' as colors;
+@use './elevations';
+@use './shared';
+
+$text-color: #000;
+@use '@material/theme/index' as theme with (
+    $primary: colors.$purple-500,
+    $surface: #fff,
+    $background: #fff,
+    $on-surface: color.change($text-color, $alpha: 0.87),
+    $error: #b00020
+);
+
+body {
+    background-color: theme.$surface;
+    color: theme.$on-surface;
+}
+
+:root {
+    @include elevations.color-vars(theme.$background, theme.$on-surface);
+    color-scheme: light;
+    --clr-primary: #{theme.$primary};
+    --clr-error: #{theme.$error};
+    --clr-text: #{theme.$on-surface};
+    --clr-text-hint: #{color.change($text-color, $alpha: 0.6)};
+    --clr-text-disabled: #{color.change($text-color, $alpha: 0.38)};
+    --clr-code-bg: var(--clr-height-0-24);
+}

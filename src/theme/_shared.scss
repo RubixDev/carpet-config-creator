@@ -1,0 +1,72 @@
+@use '@material/theme/color-palette' as colors;
+
+:root {
+    // Switch deselected color for hover/focus/active
+    --mdc-switch-unselected-handle-color: #{colors.$grey-700};
+    --mdc-switch-unselected-hover-handle-color: var(
+        --mdc-switch-unselected-handle-color
+    );
+    --mdc-switch-unselected-focus-handle-color: var(
+        --mdc-switch-unselected-handle-color
+    );
+    --mdc-switch-unselected-pressed-handle-color: var(
+        --mdc-switch-unselected-handle-color
+    );
+    // Switch selected color for hover/focus/active
+    --mdc-switch-selected-handle-color: var(--clr-primary);
+    --mdc-switch-selected-hover-handle-color: var(
+        --mdc-switch-selected-handle-color
+    );
+    --mdc-switch-selected-focus-handle-color: var(
+        --mdc-switch-selected-handle-color
+    );
+    --mdc-switch-selected-pressed-handle-color: var(
+        --mdc-switch-selected-handle-color
+    );
+    // Switch deselected track color
+    --mdc-switch-unselected-track-color: #{colors.$grey-400};
+    --mdc-switch-unselected-hover-track-color: var(
+        --mdc-switch-unselected-track-color
+    );
+    --mdc-switch-unselected-focus-track-color: var(
+        --mdc-switch-unselected-track-color
+    );
+    --mdc-switch-unselected-pressed-track-color: var(
+        --mdc-switch-unselected-track-color
+    );
+    // Switch selected track color
+    --mdc-switch-selected-track-color: var(--clr-primary);
+    --mdc-switch-selected-hover-track-color: var(
+        --mdc-switch-selected-track-color
+    );
+    --mdc-switch-selected-focus-track-color: var(
+        --mdc-switch-selected-track-color
+    );
+    --mdc-switch-selected-pressed-track-color: var(
+        --mdc-switch-selected-track-color
+    );
+    .mdc-switch .mdc-switch__track {
+        background-color: var(--mdc-switch-unselected-track-color);
+    }
+    .mdc-switch:enabled .mdc-switch__track::after,
+    .mdc-switch:enabled:active .mdc-switch__track::after,
+    .mdc-switch:enabled:focus:not(:active) .mdc-switch__track::after,
+    .mdc-switch:enabled:hover:not(:focus):not(:active)
+        .mdc-switch__track::after {
+        opacity: 0.25;
+    }
+
+    // Disabled text/icons
+    --mdc-theme-text-disabled-on-light: var(--clr-text-disabled);
+}
+
+a {
+    text-decoration: none;
+    font-weight: bold;
+    color: var(--clr-primary);
+}
+
+// Keep scrollbar with open dialogs
+.mdc-dialog-scroll-lock {
+    overflow: inherit !important;
+}
