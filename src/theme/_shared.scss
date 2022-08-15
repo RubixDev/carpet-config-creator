@@ -58,6 +58,9 @@
 
     // Disabled text/icons
     --mdc-theme-text-disabled-on-light: var(--clr-text-disabled);
+
+    // No secondary color
+    --mdc-theme-secondary: var(--clr-primary);
 }
 
 a {

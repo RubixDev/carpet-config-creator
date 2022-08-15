@@ -6,8 +6,15 @@
     import CircularProgress from '@smui/circular-progress'
     import NavBar from './lib/NavBar.svelte'
     import RuleCard from './lib/RuleCard.svelte'
-    import { colorScheme, darkTheme, SchemeKind, config } from './stores'
-    import { onMount, tick } from 'svelte'
+    import {
+        colorScheme,
+        darkTheme,
+        SchemeKind,
+        config,
+        allRules,
+        type Rule,
+    } from './stores'
+    import { tick } from 'svelte'
 
     let scheme = window.localStorage.getItem('color-scheme')
     if (scheme == 'null' || scheme == 'undefined') scheme = 'System'
@@ -21,22 +28,7 @@
             window.matchMedia('(prefers-color-scheme: dark)').matches)
     $: window.localStorage.setItem('color-scheme', SchemeKind[$colorScheme])
 
-    interface Rule {
-        name: string
-        description: string
-        type: string
-        value: string
-        strict: boolean
-        categories: string[]
-        options: string[] | null
-        extras: string[] | null
-        validators: string[]
-        repo: string
-        branches: string[]
-    }
-
     let search = ''
-    let allRules: Rule[] = []
     let filteredRules: Rule[] = []
     let renderedRules: Rule[] = []
     let showSpinner = true
@@ -45,7 +37,8 @@
         const res = await fetch(
             'https://carpet-rules.crec.dev/data/parsed_data.json',
         )
-        allRules = (await res.json()).map((rule: Rule) => {
+        $allRules = (await res.json()).map((rule: Rule) => {
+            const isBool = rule.type === 'boolean'
             const overrideStrict =
                 rule.strict && (rule.options || []).length === 0
             return {
@@ -54,24 +47,29 @@
                 value: rule.value
                     .toLowerCase()
                     .replace(/^(\d+(\.\d+)?)[lfd]$/, '$1'),
-                strict: overrideStrict ? false : rule.strict,
-                options: overrideStrict ? [rule.value] : rule.options,
+                strict: isBool ? true : overrideStrict ? false : rule.strict,
+                options: isBool
+                    ? ['true', 'false']
+                    : overrideStrict
+                    ? [rule.value]
+                    : rule.options,
+                id: rule.name + '|||' + rule.repo + rule.branches.join(),
             }
         })
-        allRules.sort((a, b) => a.name.localeCompare(b.name))
+        $allRules.sort((a, b) => a.name.localeCompare(b.name))
         filterRules()
     }
 
     $: search, filterRules()
     function filterRules() {
-        filteredRules = allRules.filter(rule =>
+        filteredRules = $allRules.filter(rule =>
             rule.name.toLowerCase().includes(search.toLowerCase()),
         )
         renderedRules = filteredRules.splice(0, 1)
         tick().then(() => onScroll(true))
     }
 
-    $: showSpinner = filteredRules.length > 0 || allRules.length === 0
+    $: showSpinner = filteredRules.length > 0 || $allRules.length === 0
 
     let toTopButton: FabComponentDev
     let toTopButtonShown = false
@@ -117,7 +115,7 @@
         >
             <Icon class="material-icons" slot="leadingIcon">search</Icon>
         </Textfield>
-        {#each renderedRules as rule (rule.name + rule.repo + rule.branches.join())}
+        {#each renderedRules as rule (rule.id)}
             <RuleCard {...rule} />
         {/each}
     {/await}

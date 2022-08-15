@@ -7,34 +7,33 @@
     import { config } from '../stores'
     import { onMount } from 'svelte'
 
-    export let name: string
     export let type: string
     export let defaultValue: string
     export let strict: boolean
     export let options: string[] | null
-    export let repo: string
-    export let branches: string[]
+    export let id: string
 
-    const ID = name + '|||' + repo + branches.join()
-    let value: string = $config[ID] !== undefined ? $config[ID] : defaultValue
+    let value: string = $config[id] !== undefined ? $config[id] : defaultValue
 
     $: value, updateConfig()
     function updateConfig() {
-        if ($config[ID] === value) return
+        if ($config[id] === value) return
         if (value !== defaultValue) {
-            $config[ID] = value
+            $config[id] = value
         } else {
-            delete $config[ID]
+            delete $config[id]
             $config = $config // Trigger update
         }
     }
 
-    $: $config, resetValue()
-    function resetValue() {
-        if (value === defaultValue) return
-        if ($config[ID] === undefined) {
+    $: $config, updateValue()
+    function updateValue() {
+        if ($config[id] === undefined && value !== defaultValue) {
             value = defaultValue
             booleanValue = type === 'boolean' ? defaultValue === 'true' : null
+        } else if ($config[id] !== undefined && $config[id] !== value) {
+            value = $config[id]
+            booleanValue = type === 'boolean' ? value === 'true' : null
         }
     }
 

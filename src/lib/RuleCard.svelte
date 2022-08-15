@@ -14,6 +14,7 @@
     export let validators: string[]
     export let repo: string
     export let branches: string[]
+    export let id: string
 
     function checkVisible(elem: HTMLElement) {
         const rect = elem.getBoundingClientRect()
@@ -122,13 +123,11 @@
 
                 <div class="current"><strong>Current&nbsp;Value:</strong></div>
                 <RuleEditor
-                    {name}
                     {type}
                     defaultValue={value}
                     {strict}
                     {options}
-                    {repo}
-                    {branches}
+                    {id}
                 />
             </div>
         </Content>

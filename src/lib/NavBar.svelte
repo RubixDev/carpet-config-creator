@@ -11,13 +11,77 @@
     import Menu from '@smui/menu'
     import type { MenuComponentDev } from '@smui/menu'
     import List, { Item, Text, Graphic } from '@smui/list'
+    import { Span } from '@smui/common/elements'
+    import Radio from '@smui/radio'
     import { siGithub } from 'simple-icons/icons'
-    import { colorScheme, SchemeKind, config } from '../stores'
+    import { saveAs } from 'file-saver'
+    import {
+        colorScheme,
+        SchemeKind,
+        config,
+        allRules,
+        type Rule,
+    } from '../stores'
     import './navbar.scss'
 
     let confirmDialogOpen = false
     let infoDialogOpen = false
     let menu: MenuComponentDev
+
+    let ambiguationDialogOpen = false
+    let ambiguousRuleName = ''
+    let ambiguousRules = []
+    let selectedRule = ''
+    let completeRuleSelect: (value: string) => void
+    let ruleSelectPromise: Promise<string>
+
+    function canAssignValueToRule(value: string, rule: Rule): boolean {
+        return (
+            (rule.strict && rule.options.includes(value)) ||
+            (['int', 'long'].includes(rule.type) && parseInt(value) !== NaN) ||
+            (['float', 'double'].includes(rule.type) &&
+                parseFloat(value) !== NaN)
+        )
+    }
+
+    async function importConfig(file?: File) {
+        if (file === undefined) return
+        $config = {}
+        for (const line of (await file.text()).split('\n')) {
+            if (/^\s*$/.test(line)) continue
+            const [name, value] = line.split(' ')
+            const found = $allRules.filter(
+                rule => rule.name === name && canAssignValueToRule(value, rule),
+            )
+
+            let rule: Rule
+            if (found.length < 1) {
+                console.log(`Skipping unknown rule ${name}`)
+                continue
+            } else if (found.length === 1) {
+                rule = found[0]
+            } else if (found.length > 1) {
+                ambiguousRuleName = name
+                ambiguousRules = found
+                selectedRule = found[0].id
+                ambiguationDialogOpen = true
+                ruleSelectPromise = new Promise(
+                    resolve => (completeRuleSelect = resolve),
+                )
+
+                const ruleId = await ruleSelectPromise
+                rule = $allRules.find(r => r.id === ruleId)
+            }
+
+            if (!canAssignValueToRule(value, rule)) {
+                console.warn(
+                    `Config contains invalid value '${value}' for rule '${rule.id}'`,
+                )
+                continue
+            }
+            $config[rule.id] = value
+        }
+    }
 
     function exportConfig() {
         const out = Object.entries($config)
@@ -28,18 +92,7 @@
             return
         }
         console.log('Exporting config file:', $config, out)
-        downloadFile('carpet.conf', out)
-    }
-
-    function downloadFile(filename: string, content: string) {
-        const temp = document.createElement('a')
-        temp.href =
-            'data:text/plain;charset=utf-8,' + encodeURIComponent(content)
-        temp.download = filename
-        temp.style.display = 'none'
-        document.body.appendChild(temp)
-        temp.click()
-        document.body.removeChild(temp)
+        saveAs(out, 'carpet.conf')
     }
 
     function resetAll() {
@@ -60,7 +113,24 @@
         <Section>
             <Title>Carpet Config Creator</Title>
         </Section>
+
         <Section id="toolbar" align="end" toolbar>
+            <label>
+                <input
+                    type="file"
+                    accept=".conf"
+                    style="display: none;"
+                    on:change={e => {
+                        importConfig(e.currentTarget.files[0])
+                        e.currentTarget.value = ''
+                    }}
+                />
+                <IconButton
+                    class="material-icons"
+                    title="Import config file"
+                    component={Span}>file_upload</IconButton
+                >
+            </label>
             <IconButton
                 class="material-icons"
                 title="Export config file"
@@ -96,6 +166,7 @@
                 on:click={showInfo}>info</IconButton
             >
         </Section>
+
         <Section id="menubar" align="end" toolbar>
             <IconButton
                 id="menu-button"
@@ -104,8 +175,24 @@
             >
             <Menu bind:this={menu}>
                 <List>
+                    <label>
+                        <input
+                            type="file"
+                            accept=".conf"
+                            style="display: none;"
+                            on:change={e => {
+                                importConfig(e.currentTarget.files[0])
+                                e.currentTarget.value = ''
+                            }}
+                        />
+                        <Item title="Import config file">
+                            <Graphic class="material-icons">file_upload</Graphic
+                            >
+                            <Text>Import Config</Text>
+                        </Item>
+                    </label>
                     <Item
-                        title="Export config file"
+                        title="Import config file"
                         on:SMUI:action={exportConfig}
                     >
                         <Graphic class="material-icons">file_download</Graphic>
@@ -156,6 +243,7 @@
         </Section>
     </Row>
 </TopAppBar>
+
 <Dialog
     bind:open={confirmDialogOpen}
     aria-labelledby="confirm-dialog-title"
@@ -171,6 +259,7 @@
         <Button on:click={() => ($config = {})}><Label>Yes</Label></Button>
     </Actions>
 </Dialog>
+
 <Dialog
     bind:open={infoDialogOpen}
     fullscreen
@@ -203,5 +292,41 @@
     </DialogContent>
     <Actions>
         <Button><Label>Done</Label></Button>
+    </Actions>
+</Dialog>
+
+<Dialog
+    bind:open={ambiguationDialogOpen}
+    scrimClickAction=""
+    escapeKeyAction=""
+    aria-labelledby="ambiguation-dialog-title"
+    aria-describedby="ambiguation-dialog-content"
+>
+    <DialogTitle id="ambiguation-dialog-title">Ambiguous Rule Name</DialogTitle>
+    <DialogContent id="ambiguation-dialog-content">
+        The rule name <code>{ambiguousRuleName}</code> exists multiple times.
+        Please select one to use below.
+        <List radioList>
+            {#each ambiguousRules as rule (rule.id)}
+                <Item>
+                    <Graphic
+                        ><Radio
+                            bind:group={selectedRule}
+                            value={rule.id}
+                        /></Graphic
+                    >
+                    <Label
+                        >{rule.repo +
+                            ' in branches ' +
+                            rule.branches.join(', ')}</Label
+                    >
+                </Item>
+            {/each}
+        </List>
+    </DialogContent>
+    <Actions>
+        <Button on:click={() => completeRuleSelect(selectedRule)}
+            ><Label>Select</Label></Button
+        >
     </Actions>
 </Dialog>
