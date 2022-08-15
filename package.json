@@ -14,7 +14,8 @@
         "prepare:light-theme-post": "postcss public/theme-light-raw.css --no-map -o public/theme-light.css",
         "prepare:dark-theme": "smui-theme compile public/theme-dark-raw.css -i src/theme/dark",
         "prepare:dark-theme-post": "postcss public/theme-dark-raw.css --no-map -o public/theme-dark.css",
-        "format": "prettier --write --plugin-search-dir=. ."
+        "format": "prettier --write --plugin-search-dir=. .",
+        "deploy": "sh deploy.sh"
     },
     "devDependencies": {
         "@material/button": "^14.0.0",
