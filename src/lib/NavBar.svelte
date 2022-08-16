@@ -16,6 +16,7 @@
     import { siGithub } from 'simple-icons/icons'
     import { saveAs } from 'file-saver'
     import {
+        createSnackbar,
         colorScheme,
         SchemeKind,
         config,
@@ -46,7 +47,7 @@
 
     async function importConfig(file?: File) {
         if (file === undefined) return
-        $config = {}
+        let didChange = false
         for (const line of (await file.text()).split('\n')) {
             if (/^\s*$/.test(line)) continue
             const [name, value] = line.split(' ')
@@ -57,6 +58,7 @@
             let rule: Rule
             if (found.length < 1) {
                 console.log(`Skipping unknown rule ${name}`)
+                $createSnackbar(`Warning: Skipping unknown rule ${name}`)
                 continue
             } else if (found.length === 1) {
                 rule = found[0]
@@ -77,10 +79,17 @@
                 console.warn(
                     `Config contains invalid value '${value}' for rule '${rule.id}'`,
                 )
+                $createSnackbar(
+                    `Warning: Config contains invalid value '${value}' for rule '${rule.name}', ignoring`,
+                )
                 continue
             }
+            if (!didChange) $config = {}
             $config[rule.id] = value
+            didChange = true
         }
+        if (!didChange)
+            $createSnackbar('Error: Config file is either empty or malformed')
     }
 
     function exportConfig() {
@@ -88,7 +97,7 @@
             .map(([id, value]) => `${id.split('|||')[0]} ${value}`)
             .join('\n')
         if (out.length === 0) {
-            alert('Config file is empty')
+            $createSnackbar('Config file is empty')
             return
         }
         console.log('Exporting config file:', $config, out)
@@ -97,6 +106,7 @@
 
     function resetAll() {
         if (Object.keys($config).length > 0) confirmDialogOpen = true
+        else $createSnackbar('No changes to reset')
     }
 
     function cycleTheme() {

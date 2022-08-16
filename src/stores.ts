@@ -1,12 +1,17 @@
+import type { ConfigAction } from '@smui/snackbar/kitchen'
 import { writable, type Writable } from 'svelte/store'
+
+export const createSnackbar: Writable<
+    (message: string, actions?: ConfigAction[]) => void
+> = writable(() => {})
 
 export enum SchemeKind {
     Light,
     Dark,
     System,
 }
-export let colorScheme = writable(SchemeKind.System)
-export let darkTheme = writable(false)
+export const colorScheme = writable(SchemeKind.System)
+export const darkTheme = writable(false)
 
 export interface Rule {
     name: string
@@ -29,4 +34,5 @@ let parsedConfig: { [key: string]: string } = {}
 if (localConfig != null && localConfig != undefined) {
     parsedConfig = JSON.parse(localConfig)
 }
-export let config: Writable<{ [key: string]: string }> = writable(parsedConfig)
+export const config: Writable<{ [key: string]: string }> =
+    writable(parsedConfig)

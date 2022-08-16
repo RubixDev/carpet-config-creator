@@ -6,7 +6,13 @@
     import CircularProgress from '@smui/circular-progress'
     import NavBar from './lib/NavBar.svelte'
     import RuleCard from './lib/RuleCard.svelte'
+    import Kitchen from '@smui/snackbar/kitchen'
+    import type {
+        KitchenComponentDev,
+        ConfigAction,
+    } from '@smui/snackbar/kitchen'
     import {
+        createSnackbar,
         colorScheme,
         darkTheme,
         SchemeKind,
@@ -97,6 +103,15 @@
     }
 
     $: window.localStorage.setItem('config', JSON.stringify($config))
+
+    let kitchen: KitchenComponentDev
+    $createSnackbar = (message: string, actions?: ConfigAction[]) => {
+        kitchen.push({
+            label: message,
+            dismissButton: true,
+            actions,
+        })
+    }
 </script>
 
 <svelte:head>
@@ -136,6 +151,8 @@
 >
     <Icon class="material-icons">expand_less</Icon>
 </Fab>
+
+<Kitchen bind:this={kitchen} dismiss$class="material-icons" />
 
 <style lang="scss">
     #rule-container {
