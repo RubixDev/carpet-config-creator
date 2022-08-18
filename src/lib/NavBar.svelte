@@ -20,8 +20,11 @@
         colorScheme,
         SchemeKind,
         config,
+        configFile,
+        currentConfig,
         allRules,
         type Rule,
+        configFiles,
     } from '../stores'
     import './navbar.scss'
 
@@ -47,12 +50,21 @@
 
     async function importConfig(file?: File) {
         if (file === undefined) return
+        if (!configFiles.includes(file.name)) {
+            $createSnackbar(`Unknown config file named '${file.name}'`)
+            return
+        }
+        if (file.name !== $configFile) $configFile = file.name
+
         let didChange = false
         for (const line of (await file.text()).split('\n')) {
             if (/^\s*$/.test(line)) continue
             const [name, value] = line.split(' ')
             const found = $allRules.filter(
-                rule => rule.name === name && canAssignValueToRule(value, rule),
+                rule =>
+                    rule.name === name &&
+                    canAssignValueToRule(value, rule) &&
+                    rule.configFiles.includes($configFile),
             )
 
             let rule: Rule
@@ -84,8 +96,9 @@
                 )
                 continue
             }
-            if (!didChange) $config = {}
-            $config[rule.id] = value
+            if (!didChange || $config[$configFile] === undefined)
+                $config[$configFile] = {}
+            $config[$configFile][rule.id] = value
             didChange = true
         }
         if (!didChange)
@@ -93,15 +106,15 @@
     }
 
     function exportConfig() {
-        const out = Object.entries($config)
+        const out = Object.entries($currentConfig)
             .map(([id, value]) => `${id.split('|||')[0]} ${value}`)
             .join('\n')
         if (out.length === 0) {
             $createSnackbar('Config file is empty')
             return
         }
-        console.log('Exporting config file:', $config, out)
-        saveAs(out, 'carpet.conf')
+        console.log(`Exporting ${$configFile}:`, $config, out)
+        saveAs(out, $configFile)
     }
 
     function resetAll() {

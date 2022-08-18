@@ -1,16 +1,13 @@
 <script lang="ts">
-    import Textfield from '@smui/textfield'
-    import Icon from '@smui/textfield/icon'
-    import Fab from '@smui/fab'
+    import Fab, { Icon } from '@smui/fab'
     import type { FabComponentDev } from '@smui/fab'
     import CircularProgress from '@smui/circular-progress'
-    import NavBar from './lib/NavBar.svelte'
-    import RuleCard from './lib/RuleCard.svelte'
     import Kitchen from '@smui/snackbar/kitchen'
     import type {
         KitchenComponentDev,
         ConfigAction,
     } from '@smui/snackbar/kitchen'
+    import { tick } from 'svelte'
     import {
         createSnackbar,
         colorScheme,
@@ -20,7 +17,10 @@
         allRules,
         type Rule,
     } from './stores'
-    import { tick } from 'svelte'
+    import otherConfigFiles from './lib/other-config-files'
+    import NavBar from './lib/NavBar.svelte'
+    import RuleCard from './lib/RuleCard.svelte'
+    import Filter from './lib/Filter.svelte'
 
     let scheme = window.localStorage.getItem('color-scheme')
     if (scheme == 'null' || scheme == 'undefined') scheme = 'System'
@@ -34,7 +34,6 @@
             window.matchMedia('(prefers-color-scheme: dark)').matches)
     $: window.localStorage.setItem('color-scheme', SchemeKind[$colorScheme])
 
-    let search = ''
     let filteredRules: Rule[] = []
     let renderedRules: Rule[] = []
     let showSpinner = true
@@ -60,17 +59,16 @@
                     ? [rule.value]
                     : rule.options,
                 id: rule.name + '|||' + rule.repo + rule.branches.join(),
+                configFiles: (otherConfigFiles[rule.repo] || ['carpet']).map(
+                    (f: string) => f + '.conf',
+                ),
             }
         })
         $allRules.sort((a, b) => a.name.localeCompare(b.name))
-        filterRules()
     }
 
-    $: search, filterRules()
-    function filterRules() {
-        filteredRules = $allRules.filter(rule =>
-            rule.name.toLowerCase().includes(search.toLowerCase()),
-        )
+    $: filteredRules, renderRules()
+    function renderRules() {
         renderedRules = filteredRules.splice(0, 1)
         tick().then(() => onScroll(true))
     }
@@ -122,14 +120,7 @@
 <NavBar />
 <div id="rule-container">
     {#await fetchRules() then}
-        <!-- TODO: advanced filters -->
-        <Textfield
-            variant="outlined"
-            bind:value={search}
-            label="Search by name"
-        >
-            <Icon class="material-icons" slot="leadingIcon">search</Icon>
-        </Textfield>
+        <Filter bind:filteredRules />
         {#each renderedRules as rule (rule.id)}
             <RuleCard {...rule} />
         {/each}

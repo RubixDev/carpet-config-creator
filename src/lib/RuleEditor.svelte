@@ -4,7 +4,7 @@
     import Select, { Option } from '@smui/select'
     import IconButton from '@smui/icon-button'
     import Autocomplete from '@smui-extra/autocomplete'
-    import { config } from '../stores'
+    import { config, configFile, currentConfig } from '../stores'
     import { onMount } from 'svelte'
 
     export let type: string
@@ -13,26 +13,33 @@
     export let options: string[] | null
     export let id: string
 
-    let value: string = $config[id] !== undefined ? $config[id] : defaultValue
+    let value: string =
+        $currentConfig[id] !== undefined ? $currentConfig[id] : defaultValue
 
     $: value, updateConfig()
     function updateConfig() {
-        if ($config[id] === value) return
+        if ($currentConfig[id] === value) return
         if (value !== defaultValue) {
-            $config[id] = value
-        } else {
-            delete $config[id]
+            if ($config[$configFile] === undefined) $config[$configFile] = {}
+            $config[$configFile][id] = value
+        } else if ($config[$configFile] !== undefined) {
+            delete $config[$configFile][id]
+            if (Object.keys($config[$configFile]).length === 0)
+                delete $config[$configFile]
             $config = $config // Trigger update
         }
     }
 
-    $: $config, updateValue()
+    $: $currentConfig, updateValue()
     function updateValue() {
-        if ($config[id] === undefined && value !== defaultValue) {
+        if ($currentConfig[id] === undefined && value !== defaultValue) {
             value = defaultValue
             booleanValue = type === 'boolean' ? defaultValue === 'true' : null
-        } else if ($config[id] !== undefined && $config[id] !== value) {
-            value = $config[id]
+        } else if (
+            $currentConfig[id] !== undefined &&
+            $currentConfig[id] !== value
+        ) {
+            value = $currentConfig[id]
             booleanValue = type === 'boolean' ? value === 'true' : null
         }
     }
@@ -113,6 +120,7 @@
         bind:disabled={undoDisabled}
         on:click={() => {
             value = defaultValue
+            booleanValue = type === 'boolean' ? value === 'true' : null
         }}>undo</IconButton
     >
 </div>

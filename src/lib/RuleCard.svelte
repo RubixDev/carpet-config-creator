@@ -1,6 +1,7 @@
 <script lang="ts">
     import Paper, { Title, Subtitle, Content } from '@smui/paper'
     import type { PaperComponentDev } from '@smui/paper'
+    import { onMount, onDestroy } from 'svelte'
     import RuleEditor from './RuleEditor.svelte'
 
     export let name: string
@@ -15,6 +16,7 @@
     export let repo: string
     export let branches: string[]
     export let id: string
+    export let configFiles: string[]
 
     function checkVisible(elem: HTMLElement) {
         const rect = elem.getBoundingClientRect()
@@ -28,19 +30,19 @@
     let card: PaperComponentDev
     let dummy = false
     let height = 0
-    window.addEventListener(
-        'scroll',
-        () => {
-            if (checkVisible(card.getElement()) && dummy) {
-                dummy = false
-            } else if (!checkVisible(card.getElement()) && !dummy) {
-                height = card.getElement().getBoundingClientRect().height
-                card.getElement().getBoundingClientRect()
-                dummy = true
-            }
-        },
-        { passive: true },
+    function onScroll() {
+        if (checkVisible(card.getElement()) && dummy) {
+            dummy = false
+        } else if (!checkVisible(card.getElement()) && !dummy) {
+            height = card.getElement().getBoundingClientRect().height
+            card.getElement().getBoundingClientRect()
+            dummy = true
+        }
+    }
+    onMount(() =>
+        window.addEventListener('scroll', onScroll, { passive: true }),
     )
+    onDestroy(() => window.removeEventListener('scroll', onScroll))
 
     function simpleMd(md: string): string {
         return md
@@ -118,6 +120,13 @@
                             branch =>
                                 `<a href="https://github.com/${repo}/tree/${branch}" target="_blank">${branch}</a>`,
                         )
+                        .join(', ')}
+                </div>
+
+                <strong>Config Files:</strong>
+                <div>
+                    {@html configFiles
+                        .map(file => `<code>${file}</code>`)
                         .join(', ')}
                 </div>
 
