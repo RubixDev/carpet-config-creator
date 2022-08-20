@@ -5,6 +5,7 @@
     import Icon from '@smui/textfield/icon'
     import Chip, { Set as ChipSet, Text, TrailingAction } from '@smui/chips'
     import IconButton from '@smui/icon-button'
+    import { onMount } from 'svelte'
     import {
         configFile,
         allRules,
@@ -38,6 +39,19 @@
     let otherCategories: string[]
     $: otherCategories = $categories.filter(c => !searchCategories.includes(c))
 
+    // Read url query params
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('search') !== null) search = params.get('search')
+    if (params.get('file') !== null) $configFile = params.get('file')
+    if (params.get('desc') !== null) descriptionSearch = params.get('desc')
+    if (params.get('type') !== null) typeSearch = params.get('type')
+    if (params.get('repo') !== null) repoSearch = params.get('repo')
+    if (params.get('branch') !== null) branchSearch = params.get('branch')
+    if (params.get('modified') !== null)
+        searchModified = params.get('modified') as 'yes' | 'no' | 'any'
+    if (params.get('categories') !== null)
+        searchCategories = params.get('categories').split(',')
+
     function addCategory() {
         if (
             categoryTemp === '' ||
@@ -60,6 +74,25 @@
         searchCategories,
         filterRules()
     function filterRules() {
+        // Update url query params
+        const params = new URLSearchParams(
+            [
+                ['search', search],
+                ['file', $configFile],
+                ['desc', descriptionSearch],
+                ['type', typeSearch],
+                ['repo', repoSearch],
+                ['branch', branchSearch],
+                ['modified', searchModified],
+                ['categories', searchCategories.join(',')],
+            ].filter(p => p[1] !== ''),
+        )
+        history.pushState(
+            null,
+            '',
+            window.location.pathname + '?' + params.toString(),
+        )
+
         filteredRules = $allRules.filter(
             rule =>
                 rule.configFiles.includes($configFile) &&
