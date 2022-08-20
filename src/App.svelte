@@ -85,6 +85,7 @@
             filteredRules.length > 0
         ) {
             renderedRules = [...renderedRules, ...filteredRules.splice(0, 1)]
+            showSpinner = filteredRules.length > 0 || $allRules.length === 0
             if (initial) tick().then(() => onScroll(true))
         }
         toTopButtonShown = window.scrollY >= 50

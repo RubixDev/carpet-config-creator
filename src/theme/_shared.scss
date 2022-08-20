@@ -73,3 +73,8 @@ a {
 .mdc-dialog-scroll-lock {
     overflow: inherit !important;
 }
+
+// Allow autocomplete inputs to grow in size
+.smui-autocomplete > div > .mdc-text-field {
+    width: 100%;
+}

@@ -30,6 +30,15 @@ export interface Rule {
     configFiles: string[]
 }
 export const allRules: Writable<Rule[]> = writable([])
+export const categories = derived(allRules, rules =>
+    [...new Set(rules.flatMap(r => r.categories))].sort(),
+)
+export const repos = derived(allRules, rules =>
+    [...new Set(rules.map(r => r.repo))].sort(),
+)
+export const branches = derived(allRules, rules =>
+    [...new Set(rules.flatMap(r => r.branches))].sort(),
+)
 
 interface Config {
     [configFile: string]: {
