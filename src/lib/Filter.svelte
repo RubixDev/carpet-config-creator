@@ -5,7 +5,6 @@
     import Icon from '@smui/textfield/icon'
     import Chip, { Set as ChipSet, Text, TrailingAction } from '@smui/chips'
     import IconButton from '@smui/icon-button'
-    import { onMount } from 'svelte'
     import {
         configFile,
         allRules,
@@ -18,6 +17,7 @@
     import otherConfigFiles from './other-config-files'
 
     export let filteredRules: Rule[] = []
+    let ruleCount = 0
 
     const configFiles = [
         ...new Set([
@@ -120,10 +120,16 @@
                     rule.categories.includes(category),
                 ),
         )
+        ruleCount = filteredRules.length
     }
 </script>
 
 <div id="filter" class="mdc-elevation--z4">
+    <div id="filter-title">
+        <h5>Search</h5>
+        <span>{ruleCount} result{ruleCount === 1 ? '' : 's'}</span>
+    </div>
+
     <Select bind:value={$configFile} variant="outlined" label="Config File">
         {#each configFiles as file}
             <Option value={file}>{file}</Option>
@@ -200,10 +206,24 @@
         display: flex;
         flex-direction: column;
         gap: 1rem;
-        padding: 1.5rem;
+        padding: 1.5rem 1rem;
         box-sizing: border-box;
         border-radius: 0.25rem;
         background-color: var(--clr-height-0-4);
+
+        #filter-title {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+
+            & > h5 {
+                margin: 0;
+            }
+            & > span {
+                color: var(--clr-text-hint);
+            }
+        }
     }
 
     strong {
