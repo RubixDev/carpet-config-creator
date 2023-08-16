@@ -50,6 +50,7 @@
                 ...rule,
                 // Lowercase and strip trailing 'f', 'd' or 'l' from numbers
                 value: rule.value
+                    .toString()
                     .toLowerCase()
                     .replace(/^(\d+(\.\d+)?)[lfd]$/, '$1'),
                 strict: isBool ? true : overrideStrict ? false : rule.strict,
