@@ -1,6 +1,5 @@
 import type { ConfigAction } from '@smui/snackbar/kitchen'
 import { writable, derived, type Writable, type Readable } from 'svelte/store'
-import otherConfigFiles from './lib/other-config-files'
 
 export const createSnackbar: Writable<
     (message: string, actions?: ConfigAction[]) => void
@@ -15,29 +14,35 @@ export const colorScheme = writable(SchemeKind.System)
 export const darkTheme = writable(false)
 
 export interface Rule {
+    id: string
     name: string
     description: string
     type: string
     value: string
     strict: boolean
     categories: string[]
-    options: string[] | null
-    extras: string[] | null
-    validators: string[]
-    repo: string
-    branches: string[]
-    id: string
-    configFiles: string[]
+    options: string[]
+    extras?: string[]
+    validators?: string[]
+    config_files: string[]
+    mod_name: string
+    mod_slug: string
+    mod_url: string
+    minecraft_versions: string[]
+    version_urls: string[]
 }
 export const allRules: Writable<Rule[]> = writable([])
 export const categories = derived(allRules, rules =>
     [...new Set(rules.flatMap(r => r.categories))].sort(),
 )
-export const repos = derived(allRules, rules =>
-    [...new Set(rules.map(r => r.repo))].sort(),
+export const mods = derived(allRules, rules =>
+    [...new Set(rules.map(r => r.mod_name))].sort(),
 )
-export const branches = derived(allRules, rules =>
-    [...new Set(rules.flatMap(r => r.branches))].sort(),
+export const mcVersions = derived(allRules, rules =>
+    [...new Set(rules.flatMap(r => r.minecraft_versions))].sort(),
+)
+export const configFiles = derived(allRules, rules =>
+    [...new Set(rules.flatMap(r => r.config_files))].sort(),
 )
 
 interface Config {
@@ -57,12 +62,3 @@ export const currentConfig: Readable<{ [id: string]: string }> = derived(
     [config, configFile],
     ([conf, file]) => conf[file] || {},
 )
-
-export const configFiles = [
-    ...new Set([
-        'carpet.conf',
-        ...Object.values(otherConfigFiles)
-            .flat()
-            .map(f => f + '.conf'),
-    ]),
-]

@@ -1,4 +1,5 @@
 <script lang="ts">
+    import Button, { Label, Icon as ButtonIcon } from '@smui/button'
     import Autocomplete from '@smui-extra/autocomplete'
     import Select, { Option } from '@smui/select'
     import Textfield from '@smui/textfield'
@@ -10,28 +11,20 @@
         allRules,
         type Rule,
         categories,
-        repos,
-        branches,
+        mods,
+        mcVersions,
+        configFiles,
         currentConfig,
     } from '../stores'
-    import otherConfigFiles from './other-config-files'
 
     export let filteredRules: Rule[] = []
     let ruleCount = 0
 
-    const configFiles = [
-        ...new Set([
-            'carpet.conf',
-            ...Object.values(otherConfigFiles)
-                .flat()
-                .map(f => f + '.conf'),
-        ]),
-    ]
     let search = ''
     let descriptionSearch = ''
     let typeSearch = ''
-    let repoSearch = ''
-    let branchSearch = ''
+    let modSearch = ''
+    let mcVersionSearch = 'any'
     let searchModified: 'yes' | 'no' | 'any' = 'any'
 
     let categoryTemp = ''
@@ -39,15 +32,42 @@
     let otherCategories: string[]
     $: otherCategories = $categories.filter(c => !searchCategories.includes(c))
 
+    let resetAllButtonDisabled = true
+    $: resetAllButtonDisabled =
+        search === '' &&
+        descriptionSearch === '' &&
+        typeSearch === '' &&
+        modSearch === '' &&
+        mcVersionSearch === 'any' &&
+        searchModified === 'any' &&
+        searchCategories.length === 0
+    function resetAll() {
+        // TODO: this seems to not work great with the Autocomplete boxes
+        search = ''
+        descriptionSearch = ''
+        typeSearch = ''
+        modSearch = ''
+        mcVersionSearch = 'any'
+        searchModified = 'any'
+        searchCategories = []
+    }
+
     // Read url query params
     const params = new URLSearchParams(window.location.search)
     if (params.get('search') !== null) search = params.get('search')
     if (params.get('file') !== null) $configFile = params.get('file')
     if (params.get('desc') !== null) descriptionSearch = params.get('desc')
     if (params.get('type') !== null) typeSearch = params.get('type')
-    if (params.get('repo') !== null) repoSearch = params.get('repo')
-    if (params.get('branch') !== null) branchSearch = params.get('branch')
-    if (params.get('modified') !== null)
+    if (params.get('mod') !== null) modSearch = params.get('mod')
+    if (
+        params.get('mc') !== null &&
+        ['any', ...$mcVersions].includes(params.get('mc'))
+    )
+        mcVersionSearch = params.get('mc')
+    if (
+        params.get('modified') !== null &&
+        ['yes', 'no', 'any'].includes(params.get('modified'))
+    )
         searchModified = params.get('modified') as 'yes' | 'no' | 'any'
     if (params.get('categories') !== null)
         searchCategories = params.get('categories').split(',')
@@ -68,8 +88,8 @@
         $configFile,
         descriptionSearch,
         typeSearch,
-        repoSearch,
-        branchSearch,
+        modSearch,
+        mcVersionSearch,
         searchModified,
         searchCategories,
         filterRules()
@@ -81,36 +101,50 @@
                 ['file', $configFile],
                 ['desc', descriptionSearch],
                 ['type', typeSearch],
-                ['repo', repoSearch],
-                ['branch', branchSearch],
+                ['mod', modSearch],
+                ['mc', mcVersionSearch],
                 ['modified', searchModified],
                 ['categories', searchCategories.join(',')],
-            ].filter(p => p[1] !== ''),
+            ].filter(
+                p =>
+                    p[1] !== '' &&
+                    !(p[0] === 'file' && p[1] === 'carpet.conf') &&
+                    !(p[0] === 'mc' && p[1] === 'any') &&
+                    !(p[0] === 'modified' && p[1] === 'any'),
+            ),
         )
+        const paramsString = params.toString()
         history.pushState(
             null,
             '',
-            window.location.pathname + '?' + params.toString(),
+            window.location.pathname +
+                (paramsString === '' ? '' : '?' + paramsString),
         )
 
         filteredRules = $allRules.filter(
             rule =>
-                rule.configFiles.includes($configFile) &&
+                rule.config_files.includes($configFile) &&
                 rule.name.toLowerCase().includes(search.toLowerCase()) &&
                 (rule.description
                     .toLowerCase()
                     .includes(descriptionSearch.toLowerCase()) ||
-                    (rule.extras !== null &&
+                    (rule.extras !== undefined &&
                         rule.extras.some(extra =>
                             extra
                                 .toLowerCase()
                                 .includes(descriptionSearch.toLowerCase()),
                         ))) &&
                 rule.type.toLowerCase().includes(typeSearch.toLowerCase()) &&
-                rule.repo.toLowerCase().includes(repoSearch.toLowerCase()) &&
-                rule.branches.some(branch =>
-                    branch.toLowerCase().includes(branchSearch.toLowerCase()),
-                ) &&
+                (rule.mod_name
+                    .toLowerCase()
+                    .includes(modSearch.toLowerCase()) ||
+                    rule.mod_slug
+                        .toLowerCase()
+                        .includes(modSearch.toLowerCase())) &&
+                (mcVersionSearch === 'any' ||
+                    rule.minecraft_versions.some(version =>
+                        version.includes(mcVersionSearch.toLowerCase()),
+                    )) &&
                 (searchModified === 'any' ||
                     (Object.keys($currentConfig).includes(rule.id) &&
                         searchModified === 'yes') ||
@@ -131,7 +165,7 @@
     </div>
 
     <Select bind:value={$configFile} variant="outlined" label="Config File">
-        {#each configFiles as file}
+        {#each $configFiles as file}
             <Option value={file}>{file}</Option>
         {/each}
     </Select>
@@ -140,6 +174,14 @@
     </Textfield>
 
     <strong>Advanced Search</strong>
+    <Button
+        variant="outlined"
+        bind:disabled={resetAllButtonDisabled}
+        on:click={resetAll}
+    >
+        <ButtonIcon class="material-icons">restart_alt</ButtonIcon>
+        <Label>Reset all filters</Label>
+    </Button>
     <div id="advanced-filters">
         <Textfield
             bind:value={descriptionSearch}
@@ -155,17 +197,17 @@
 
         <Autocomplete
             combobox
-            options={$repos}
-            bind:value={repoSearch}
-            label="Repository"
+            options={$mods}
+            bind:value={modSearch}
+            label="Mod"
         />
 
-        <Autocomplete
-            combobox
-            options={$branches}
-            bind:value={branchSearch}
-            label="Branch"
-        />
+        <Select bind:value={mcVersionSearch} label="Minecraft Version">
+            <Option value="any">any</Option>
+            {#each $mcVersions as version}
+                <Option value={version}>{version}</Option>
+            {/each}
+        </Select>
 
         <Select bind:value={searchModified} label="Modified">
             {#each ['yes', 'no', 'any'] as option}

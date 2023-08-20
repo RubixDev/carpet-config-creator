@@ -10,7 +10,7 @@
     export let type: string
     export let defaultValue: string
     export let strict: boolean
-    export let options: string[] | null
+    export let options: string[]
     export let id: string
 
     let value: string =
@@ -69,7 +69,7 @@
         </FormField>
     {:else if strict}
         <Select bind:value label="Option">
-            {#each options || [] as option}
+            {#each options as option}
                 <Option value={option}>{option}</Option>
             {/each}
         </Select>

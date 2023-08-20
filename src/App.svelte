@@ -17,7 +17,6 @@
         allRules,
         type Rule,
     } from './stores'
-    import otherConfigFiles from './lib/other-config-files'
     import NavBar from './lib/NavBar.svelte'
     import RuleCard from './lib/RuleCard.svelte'
     import Filter from './lib/Filter.svelte'
@@ -40,29 +39,25 @@
 
     async function fetchRules() {
         const res = await fetch(
-            'https://carpet-rules.crec.dev/data/parsed_data.json',
+            'https://data.carpet.rubixdev.de/data/combined.json',
         )
         $allRules = (await res.json()).map((rule: Rule) => {
             const isBool = rule.type === 'boolean'
-            const overrideStrict =
-                rule.strict && (rule.options || []).length === 0
+            const overrideStrict = rule.strict && rule.options.length === 0
             return {
                 ...rule,
-                // Lowercase and strip trailing 'f', 'd' or 'l' from numbers
-                value: rule.value
-                    .toString()
-                    .toLowerCase()
-                    .replace(/^(\d+(\.\d+)?)[lfd]$/, '$1'),
                 strict: isBool ? true : overrideStrict ? false : rule.strict,
                 options: isBool
                     ? ['true', 'false']
                     : overrideStrict
                     ? [rule.value]
                     : rule.options,
-                id: rule.name + '|||' + rule.repo + rule.branches.join(),
-                configFiles: (otherConfigFiles[rule.repo] || ['carpet']).map(
-                    (f: string) => f + '.conf',
-                ),
+                id:
+                    rule.name +
+                    '|||' +
+                    rule.mod_slug +
+                    rule.minecraft_versions.join(),
+                config_files: rule.config_files.map(name => name + '.conf'),
             }
         })
         $allRules.sort((a, b) => a.name.localeCompare(b.name))

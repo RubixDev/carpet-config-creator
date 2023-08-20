@@ -4,19 +4,22 @@
     import { onMount, onDestroy } from 'svelte'
     import RuleEditor from './RuleEditor.svelte'
 
+    export let id: string
     export let name: string
     export let description: string
     export let type: string
     export let value: string
     export let strict: boolean
     export let categories: string[]
-    export let options: string[] | null
-    export let extras: string[] | null
-    export let validators: string[]
-    export let repo: string
-    export let branches: string[]
-    export let id: string
-    export let configFiles: string[]
+    export let options: string[]
+    export let extras: string[] | null = null
+    export let validators: string[] | null = null
+    export let config_files: string[]
+    export let mod_name: string
+    export let mod_slug: string
+    export let mod_url: string
+    export let minecraft_versions: string[]
+    export let version_urls: string[]
 
     function checkVisible(elem: HTMLElement) {
         const rect = elem.getBoundingClientRect()
@@ -81,22 +84,20 @@
 
                 <strong>Categories:</strong>
                 <div>
-                    {@html categories
-                        .map(category => `<code>${category}</code>`)
-                        .join(', ')}
+                    {#each categories as category, index}<code>{category}</code
+                        >{#if index !== categories.length - 1}, {/if}{/each}
                 </div>
 
-                {#if options !== null && options.length !== 0}
+                {#if options.length !== 0}
                     <strong>{strict ? 'Required' : 'Suggested'} Options:</strong
                     >
                     <div>
-                        {@html options
-                            .map(option => `<code>${option}</code>`)
-                            .join(', ')}
+                        {#each options as option, index}<code>{option}</code
+                            >{#if index !== options.length - 1}, {/if}{/each}
                     </div>
                 {/if}
 
-                {#if validators.length !== 0}
+                {#if (validators || []).length !== 0}
                     <strong>Additional&nbsp;Notes:</strong>
                     <ul>
                         {#each validators as note}
@@ -105,29 +106,25 @@
                     </ul>
                 {/if}
 
-                <strong>Repository:</strong>
+                <strong>Mod:</strong>
                 <div>
-                    <!-- TODO: gitlab -->
-                    <a href="https://github.com/{repo}" target="_blank"
-                        >{repo}</a
+                    <a href={mod_url} target="_blank" title={mod_slug}
+                        >{mod_name}</a
                     >
                 </div>
 
-                <strong>Branches:</strong>
+                <strong>MC Versions:</strong>
                 <div>
-                    {@html branches
-                        .map(
-                            branch =>
-                                `<a href="https://github.com/${repo}/tree/${branch}" target="_blank">${branch}</a>`,
-                        )
-                        .join(', ')}
+                    {#each minecraft_versions as version, index}<a
+                            href={version_urls[index]}>{version}</a
+                        >{#if index !== minecraft_versions.length - 1},
+                        {/if}{/each}
                 </div>
 
                 <strong>Config Files:</strong>
                 <div>
-                    {@html configFiles
-                        .map(file => `<code>${file}</code>`)
-                        .join(', ')}
+                    {#each config_files as file, index}<code>{file}</code
+                        >{#if index !== config_files.length - 1}, {/if}{/each}
                 </div>
 
                 <div class="current"><strong>Current&nbsp;Value:</strong></div>

@@ -50,7 +50,7 @@
 
     async function importConfig(file?: File) {
         if (file === undefined) return
-        if (!configFiles.includes(file.name)) {
+        if (!$configFiles.includes(file.name)) {
             $createSnackbar(`Unknown config file named '${file.name}'`)
             return
         }
@@ -64,7 +64,7 @@
                 rule =>
                     rule.name === name &&
                     canAssignValueToRule(value, rule) &&
-                    rule.configFiles.includes($configFile),
+                    rule.config_files.includes($configFile),
             )
 
             let rule: Rule
@@ -304,13 +304,21 @@
             <a
                 href="https://github.com/gnembon/fabric-carpet/wiki/List-of-Carpet-extensions"
                 >all its extensions</a
-            >. Configuring all the settings in game can get rather annoying and
+            >. Configuring all the settings in game can get quite annoying and
             time consuming, especially with multiple extensions installed.
         </p>
         <p>
-            This page currently uses Crec0's <a
-                href="https://carpet-rules.crec.dev/">Carpet Rules Database</a
-            > for the list of rules and their information.
+            <s
+                >This page currently uses Crec0's <a
+                    href="https://carpet-rules.crec.dev/"
+                    >Carpet Rules Database</a
+                > for the list of rules and their information.</s
+            >
+            <br />
+            This page now uses my own
+            <a href="https://github.com/RubixDev/carpet-database"
+                >Carpet Rules Database</a
+            >.
         </p>
     </DialogContent>
     <Actions>
