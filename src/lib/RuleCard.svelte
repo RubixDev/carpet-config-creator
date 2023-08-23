@@ -1,8 +1,10 @@
 <script lang="ts">
     import Paper, { Title, Subtitle, Content } from '@smui/paper'
     import type { PaperComponentDev } from '@smui/paper'
+    import IconButton from '@smui/icon-button'
     import { onMount, onDestroy } from 'svelte'
     import RuleEditor from './RuleEditor.svelte'
+    import { createSnackbar } from '../stores'
 
     export let id: string
     export let name: string
@@ -57,6 +59,28 @@
             )
             .replace(/`([^`]+)`/g, '<code>$1</code>')
     }
+
+    async function share() {
+        const params = new URLSearchParams([
+            ['search', name],
+            ['file', config_files[0]],
+            ['type', type],
+            ['mod', mod_name],
+            ['categories', categories.join(',')],
+        ])
+        const shareUrl =
+            window.location.origin +
+            window.location.pathname +
+            '?' +
+            params.toString()
+        console.log(`sharing rule ${name} with ${shareUrl}`)
+        try {
+            await navigator.clipboard.writeText(shareUrl)
+            $createSnackbar('Copied to clipboard')
+        } catch (err) {
+            $createSnackbar('Could not copy link: ' + err)
+        }
+    }
 </script>
 
 <Paper
@@ -67,7 +91,13 @@
     {#if dummy}
         <div style="height: calc({height}px - 3rem);" />
     {:else}
-        <Title><code class="title">{name}</code></Title>
+        <Title style="display: flex; align-items: center;"
+            ><code class="title">{name}</code><IconButton
+                class="material-icons"
+                title="Share direct link to rule"
+                on:click={share}>share</IconButton
+            ></Title
+        >
         <Subtitle><p>{@html simpleMd(description)}</p></Subtitle>
         <Content>
             <p>
