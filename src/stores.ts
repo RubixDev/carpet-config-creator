@@ -38,6 +38,9 @@ export const categories = derived(allRules, rules =>
 export const mods = derived(allRules, rules =>
     [...new Set(rules.map(r => r.mod_name))].sort(),
 )
+export const mod_slugs = derived(allRules, rules =>
+    [...new Set(rules.map(r => r.mod_slug))].sort(),
+)
 export const mcVersions = derived(allRules, rules =>
     [...new Set(rules.flatMap(r => r.minecraft_versions))].sort(),
 )

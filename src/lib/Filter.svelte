@@ -12,6 +12,7 @@
         type Rule,
         categories,
         mods,
+        mod_slugs,
         mcVersions,
         configFiles,
         currentConfig,
@@ -121,6 +122,12 @@
                 (paramsString === '' ? '' : '?' + paramsString),
         )
 
+        // if the modSearch matches any mod name or slug exactly, only rules of that exact mod should be shown
+        const modExactMatch =
+            $mods.find(mod => mod.toLowerCase() === modSearch.toLowerCase()) ||
+            $mod_slugs.find(
+                slug => slug.toLowerCase() === modSearch.toLowerCase(),
+            )
         filteredRules = $allRules.filter(
             rule =>
                 rule.config_files.includes($configFile) &&
@@ -135,12 +142,17 @@
                                 .includes(descriptionSearch.toLowerCase()),
                         ))) &&
                 rule.type.toLowerCase().includes(typeSearch.toLowerCase()) &&
-                (rule.mod_name
-                    .toLowerCase()
-                    .includes(modSearch.toLowerCase()) ||
-                    rule.mod_slug
-                        .toLowerCase()
-                        .includes(modSearch.toLowerCase())) &&
+                (modExactMatch !== undefined
+                    ? rule.mod_name.toLowerCase() ===
+                          modExactMatch.toLowerCase() ||
+                      rule.mod_slug.toLowerCase() ===
+                          modExactMatch.toLowerCase()
+                    : rule.mod_name
+                          .toLowerCase()
+                          .includes(modSearch.toLowerCase()) ||
+                      rule.mod_slug
+                          .toLowerCase()
+                          .includes(modSearch.toLowerCase())) &&
                 (mcVersionSearch === 'any' ||
                     rule.minecraft_versions.some(version =>
                         version.includes(mcVersionSearch.toLowerCase()),
