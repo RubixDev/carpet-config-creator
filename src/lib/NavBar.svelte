@@ -14,7 +14,6 @@
     import { Span } from '@smui/common/elements'
     import Radio from '@smui/radio'
     import { siGithub } from 'simple-icons/icons'
-    import { saveAs } from 'file-saver'
     import {
         createSnackbar,
         colorScheme,
@@ -27,9 +26,12 @@
         configFiles,
     } from '../stores'
     import './navbar.scss'
+    import CodeBlock from './CodeBlock.svelte'
 
     let confirmDialogOpen = false
     let infoDialogOpen = false
+    let exportDialogOpen = false
+    let exportOut = ''
     let menu: MenuComponentDev
 
     let ambiguationDialogOpen = false
@@ -44,7 +46,8 @@
             (rule.strict && rule.options.includes(value)) ||
             (['int', 'long'].includes(rule.type) && parseInt(value) !== NaN) ||
             (['float', 'double'].includes(rule.type) &&
-                parseFloat(value) !== NaN)
+                parseFloat(value) !== NaN) ||
+            (rule.type === 'String' && !rule.strict)
         )
     }
 
@@ -106,15 +109,24 @@
     }
 
     function exportConfig() {
-        const out = Object.entries($currentConfig)
+        exportOut = Object.entries($currentConfig)
             .map(([id, value]) => `${id.split('|||')[0]} ${value}`)
             .join('\n')
-        if (out.length === 0) {
+        if (exportOut.length === 0) {
             $createSnackbar('Config file is empty')
             return
         }
-        console.log(`Exporting ${$configFile}:`, $config, out)
-        saveAs(out, $configFile)
+        console.log(`Exporting ${$configFile}:`, $config, exportOut)
+
+        const blob = new Blob([exportOut], { type: 'text/plain' })
+        const elem = window.document.createElement('a')
+        elem.href = window.URL.createObjectURL(blob)
+        elem.download = $configFile
+        elem.style.display = 'none'
+        document.body.appendChild(elem)
+        elem.click()
+        document.body.removeChild(elem)
+        exportDialogOpen = true
     }
 
     function resetAll() {
@@ -215,7 +227,7 @@
                         </Item>
                     </label>
                     <Item
-                        title="Import config file"
+                        title="Export config file"
                         on:SMUI:action={exportConfig}
                     >
                         <Graphic class="material-icons">file_download</Graphic>
@@ -347,17 +359,37 @@
                         /></Graphic
                     >
                     <Label
-                        >{rule.repo +
-                            ' in branches ' +
-                            rule.branches.join(', ')}</Label
+                        >{rule.mod_name +
+                            ' in version' +
+                            (rule.minecraft_versions.length === 1 ? '' : 's') +
+                            ' ' +
+                            rule.minecraft_versions.join(', ')}</Label
                     >
                 </Item>
             {/each}
         </List>
     </DialogContent>
     <Actions>
-        <Button on:click={() => completeRuleSelect(selectedRule)}
+        <Button
+            on:click={() =>
+                setTimeout(() => completeRuleSelect(selectedRule), 100)}
             ><Label>Select</Label></Button
         >
+    </Actions>
+</Dialog>
+
+<Dialog
+    bind:open={exportDialogOpen}
+    aria-labelledby="export-dialog-title"
+    aria-describedby="export-dialog-content"
+>
+    <DialogTitle id="export-dialog-title">Exported Config File</DialogTitle>
+    <DialogContent id="export-dialog-content">
+        The <code>{$configFile}</code> should have downloaded automatically. In
+        case it hasn't, you can copy the contents from here:
+        <CodeBlock content={exportOut} />
+    </DialogContent>
+    <Actions>
+        <Button defaultAction><Label>Close</Label></Button>
     </Actions>
 </Dialog>
